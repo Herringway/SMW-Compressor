@@ -54,7 +54,7 @@ namespace LZ2
                             outputbuffer.Add(tempbyte++);
                         break;
                     case 4: //Repeat
-                        tempaddress = BEShorttoLE(Data.ReadUInt16());
+                        tempaddress = EndianSwap(Data.ReadUInt16());
                         if (tempaddress > outputbuffer.Count)
                             throw new Exception("Bad Address!");
                         for (int i = 0; i <= commandlength; i++)
@@ -95,7 +95,7 @@ namespace LZ2
                                     outputbuffer.Add(tempbyte++);
                                 break;
                             case 4: //Repeat
-                                tempaddress = BEShorttoLE(Data.ReadUInt16());
+                                tempaddress = EndianSwap(Data.ReadUInt16());
                                 if (tempaddress > outputbuffer.Count)
                                     throw new Exception("Bad Address!");
                                 for (int i = 0; i <= longcommandlength; i++)
@@ -117,7 +117,7 @@ namespace LZ2
 
             return outputbuffer.ToArray();
         }
-        private static ushort BEShorttoLE(ushort input)
+        private static ushort EndianSwap(ushort input)
         {
             return (ushort)((input>>8) + (input<<8));
         }
