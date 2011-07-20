@@ -13,8 +13,7 @@ namespace LZ2
             BinaryReader Data = new BinaryReader(data);
             List<byte> outputbuffer = new List<byte>();
             byte command;
-            byte commandlength;
-            short longcommandlength;
+            short commandlength;
             ushort tempaddress;
             byte tempbyte;
             byte tempbyte2;
@@ -26,6 +25,11 @@ namespace LZ2
                 command = (byte)((tempbyte >> 5) & 0x7);
                 commandlength = (byte)(tempbyte & 0x1F);
 
+                if (command == 7)
+                { //Long Command
+                    command = (byte)((commandlength >> 2) & 0x7);
+                    commandlength = (short)(((commandlength & 3) << 8) + Data.ReadByte());
+                }
                 switch (command)
                 {
                     case 0: //Direct Copy
@@ -64,54 +68,9 @@ namespace LZ2
                         throw new Exception("Unused command byte detected (5)");
                     case 6: //Unused
                         throw new Exception("Unused command byte detected (6)");
-                    case 7: //Long Command
-                        command = (byte)((commandlength >> 2) & 0x7);
-                        longcommandlength = (short)(((commandlength & 3) << 8) + Data.ReadByte());
-
-                        switch (command)
-                        {
-                            case 0: //Direct Copy
-                                for (int i = 0; i <= longcommandlength; i++)
-                                    outputbuffer.Add(Data.ReadByte());
-                                break;
-                            case 1: //Byte Fill
-                                tempbyte = Data.ReadByte();
-                                for (int i = 0; i <= longcommandlength; i++)
-                                    outputbuffer.Add(tempbyte);
-                                break;
-                            case 2: //Word Fill
-                                tempbyte = Data.ReadByte();
-                                tempbyte2 = Data.ReadByte();
-                                for (int i = 0; i <= longcommandlength; i++)
-                                {
-                                    if (i % 2 == 1)
-                                        outputbuffer.Add(tempbyte2);
-                                    outputbuffer.Add(tempbyte);
-                                }
-                                break;
-                            case 3: //Increasing Fill
-                                tempbyte = Data.ReadByte();
-                                for (int i = 0; i <= longcommandlength; i++)
-                                    outputbuffer.Add(tempbyte++);
-                                break;
-                            case 4: //Repeat
-                                tempaddress = EndianSwap(Data.ReadUInt16());
-                                if (tempaddress > outputbuffer.Count)
-                                    throw new Exception("Bad Address!");
-                                for (int i = 0; i <= longcommandlength; i++)
-                                    outputbuffer.Add(outputbuffer[tempaddress++]);
-                                break;
-                            case 5: //Unused
-                                throw new Exception("Unused command byte detected (5)");
-                            case 6: //Unused
-                                throw new Exception("Unused command byte detected (6)");
-                            case 7: //End
-                                completed = true;
-                                break;
-
-                        }
+                    case 7:
+                        completed = true;
                         break;
-
                 }
             }
 
